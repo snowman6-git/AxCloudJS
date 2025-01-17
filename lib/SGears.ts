@@ -7,3 +7,7 @@ export function uuid_gen(){
   const uuid = uuidv4();
   return uuid
 }
+export function no_empty(...args: string[]): boolean {
+    const regex = /\s/; // 공백 문자가 정규식
+    return !args.some((arg) => regex.test(arg)); // 문자가 있더라도 공백이 포함되면 false !를 추가하여 있으면 true인것을 뒤집음
+}

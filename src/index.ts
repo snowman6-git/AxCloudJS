@@ -10,7 +10,7 @@ import { //hono에서 쿠키 지원함
 } from 'hono/cookie'
 //lib ==========================
 import { Uchein } from '../lib/uchein' //유저와 세션의 체인
-import { uuid_gen, print } from '../lib/SGears' //자주 쓰거나 간단하지만 줄차지하는 모듈/함수
+import { uuid_gen, print, no_empty } from '../lib/SGears' //자주 쓰거나 간단하지만 줄차지하는 모듈/함수
 //Npm ================================
 import { CookieStore, Session, sessionMiddleware } from 'hono-sessions';
 
@@ -59,12 +59,12 @@ app.get('/login', (c) => {
 
 app.post('/login', async (c) => {
   const formData = await c.req.formData() // 폼 데이터 파싱
-  let id = formData.get("id")?.toString()
-  let pw = formData.get("pw")?.toString()
+  let id = formData.get("id")?.toString() || "" //예외처리를 위해 없을시
+  let pw = formData.get("pw")?.toString() || "" //예외처리를 위해 없을시
   print(`ID: ${id} PW: ${pw}`)
   
   const session = c.get('session')
-  if (id != "" || pw != ""){//db통과시 차후 디비코드 추가
+  if (no_empty(id, pw)){//db통과시 차후 디비코드 추가
     let usession_id = uuid_gen() //uuid 발급
     session.set("user_id", id) //세션을 ?로 설정. type SessionUsing을 따라야함
     session.set("usession_id", usession_id)
