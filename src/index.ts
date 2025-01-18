@@ -11,10 +11,12 @@ import { //hono에서 쿠키 지원함
 
 //lib =========================================================================================
 import { Uchein } from './lib/uchein' //유저와 세션의 체인
-import { uuid_gen, print, no_empty } from './lib/SGears' //자주 쓰거나 간단하지만 줄차지하는 모듈/함수
+import { uuid_gen, print, no_empty, html } from './lib/SGears' //자주 쓰거나 간단하지만 줄차지하는 모듈/함수
 
 //Npm =======================================================================================
 import { CookieStore, Session, sessionMiddleware } from 'hono-sessions';
+
+import { readFile } from 'fs/promises';
 
 const uchein = new Uchein()
 const store = new CookieStore()
@@ -43,13 +45,37 @@ app.use('*', sessionMiddleware({
   },
 }))
 
-app.get('/', (c) => {
-  const session = c.get('session')
-  
-  let usession_id = session.get('usession_id')
-  let user = uchein.who_is(usession_id)
+Bun.serve({
+  fetch(req, server) {}, // upgrade logic
+  websocket: {
+    message(ws, message) {
+      print(`${ws.remoteAddress}로 부터: ${message}`)
+    }, // a message is received
+    open(ws) {
+      print("소켓 열림!")
+      print(ws)
+    }, // a socket is opened
+    close(ws, code, message) {
+      print("소켓 닫힘")
+      print(ws)
+    }, // a socket is closed
+    drain(ws) {}, // the socket is ready to receive more data
+  },
+});
 
-  return c.html(`${usession_id} ${user}`)
+const socket = new WebSocket("ws://localhost:8000");
+socket.addEventListener("message", event => {
+  console.log(event.data);
+})
+
+app.get('/', async(c) => {
+  const file = Bun.file(html("index.html"));
+  return new Response(file);
+
+  // const session = c.get('session')
+  // let usession_id = session.get('usession_id')
+  // let user = uchein.who_is(usession_id)
+  // return c.html(`${usession_id} ${user}`)
 })
 
 app.get('/login', (c) => {
@@ -78,14 +104,12 @@ app.post('/login', async (c) => {
     });
 
     let usession_id = uuid_gen() //uuid 발급
-    uchein.add_user(id, usession_id)
-
+    uchein.add_user(id, usession_id) //로그인이 성공했다면 user가 소지하는 세션을 전송 (차후 조회는 session으로만)
 
     setCookie(c, 'usession_id', usession_id)
-    session.set("user_id", id) //세션을 ?로 설정. type SessionUsing을 따라야함
     session.set("usession_id", usession_id)
     
-    return c.html(`환영합니다 ${ session.get('user_id') } ${ session.get('usession_id') } 를 보유중이네요!`)
+    return c.html(`환영합니다 ${ uchein.who_is(session.get('usession_id')) } ${ session.get('usession_id') } 를 보유중이네요!`)
   }
   else{
     return c.html(`저런! 쓰잘때기 없는 시도는 이미 예측했답니다.`)

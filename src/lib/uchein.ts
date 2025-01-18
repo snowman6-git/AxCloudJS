@@ -6,7 +6,7 @@ export class Uchein {
     add_user(user: any, uuid: any){ //서버에서 직접 제공한 user의 session uuid를 저장
         this._chein.set(uuid, user)
     }
-    who_is(uuid: any){ //프론트엔드에서 온 요청과 실제를 비교
+    who_is(uuid: any){ //요청온 세션이 누구의 것인지 조회
         let user = this._chein.get(uuid)   
         if(user){
             //로그 남기기

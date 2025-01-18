@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import path  from 'path';
 
 export function print(text: any){
   console.log(text)
@@ -7,6 +8,11 @@ export function print(text: any){
 export function uuid_gen(){
   const uuid = uuidv4();
   return uuid
+}
+
+export function html(filename: string){
+  const root = path.join("./src/htmls/", filename);
+  return root
 }
 
 // 지금 오류있음 별걸 다 거르는 오류 검사하고 고치기
