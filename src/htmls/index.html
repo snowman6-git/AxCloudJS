@@ -11,28 +11,55 @@
     <button id="sendButton">전송</button>
     <div id="messages"></div>
 
-    <script>
-        const ws = new WebSocket('ws://localhost:8000');
+    <input type="file" onchange="check()" multiple />
 
-        ws.onopen = () => {
-            console.log('서버에 연결되었습니다.');
-        };
+<script>
 
-        ws.onmessage = (event) => {
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML += `<p>${event.data}</p>`;
-        };
+    function check(){
+    const files = event.target.files;
+    for (let i = 0; i < files.length; i++) {
+        console.log(files[i])
+        upload(files[i])
+    }  
+    }
+    let chunkSize = 1024
+    const upload = async (file) => {
+    const totalChunks = Math.ceil(file.size / chunkSize);
+    let offset = 0;
+    for (let i = 0; i < totalChunks; i++) {
+        const chunk = file.slice(offset, offset + chunkSize);
+        const formData = new FormData();
+        formData.append('filename', file.name); // 파일 이름 추가
+        formData.append('chunk', chunk); // 청크 추가
+        ws.send(chunk)
+    }
+    ws.send("end")
+    }
 
-        document.getElementById('sendButton').onclick = () => {
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value;
-            ws.send(message);
-            messageInput.value = '';
-        };
 
-        ws.onclose = () => {
-            console.log('서버와의 연결이 끊어졌습니다.');
-        };
-    </script>
+
+    const ws = new WebSocket('ws://localhost:3000/ws');
+
+    ws.onopen = () => {
+        console.log('서버에 연결되었습니다.');
+    };
+
+
+    // ws.onmessage = (event) => {
+    //     const messagesDiv = document.getElementById('messages');
+    //     messagesDiv.innerHTML += `<p>${event.data}</p>`;
+    // };
+
+    document.getElementById('sendButton').onclick = () => {
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput.value;
+        ws.send(message);
+        messageInput.value = '';
+    };
+
+    ws.onclose = () => {
+        console.log('서버와의 연결이 끊어졌습니다.');
+    };
+</script>
 </body>
 </html>

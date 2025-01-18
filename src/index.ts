@@ -8,18 +8,19 @@ import { //hono에서 쿠키 지원함
   setSignedCookie,
   deleteCookie,
 } from 'hono/cookie'
-
+import { createBunWebSocket } from 'hono/bun'
+import type { ServerWebSocket } from 'bun'
 //lib =========================================================================================
 import { Uchein } from './lib/uchein' //유저와 세션의 체인
 import { uuid_gen, print, no_empty, html } from './lib/SGears' //자주 쓰거나 간단하지만 줄차지하는 모듈/함수
-
 //Npm =======================================================================================
 import { CookieStore, Session, sessionMiddleware } from 'hono-sessions';
-
 import { readFile } from 'fs/promises';
+import fs from 'fs';
 
 const uchein = new Uchein()
 const store = new CookieStore()
+const { upgradeWebSocket, websocket } = createBunWebSocket<ServerWebSocket>()
 
 type SessionUsing = { //해당 포맷의 세션만 리턴가능
   user_id: string;
@@ -45,33 +46,38 @@ app.use('*', sessionMiddleware({
   },
 }))
 
-Bun.serve({
-  fetch(req, server) {}, // upgrade logic
-  websocket: {
-    message(ws, message) {
-      print(`${ws.remoteAddress}로 부터: ${message}`)
-    }, // a message is received
-    open(ws) {
-      print("소켓 열림!")
-      print(ws)
-    }, // a socket is opened
-    close(ws, code, message) {
-      print("소켓 닫힘")
-      print(ws)
-    }, // a socket is closed
-    drain(ws) {}, // the socket is ready to receive more data
-  },
-});
+app.get( //실제로 할땐 wss 해서 인증서박기
+  '/ws', //기본 주소를 동반한 라우팅 localhost:port/ws
+  upgradeWebSocket((c) => {
 
-const socket = new WebSocket("ws://localhost:8000");
-socket.addEventListener("message", event => {
-  console.log(event.data);
-})
+    // const session = c.get('session')
+    // if(uchein.who_is(session.get("usession_id"))){}
+
+    return {
+      async onMessage(event, ws) {
+        if(event.data === "end"){ //이걸 이딴식으로 해도 되는지 찾아오기
+          print("파일 전송 완료됌!") //하드밀림이나 실제 저장이 완료되면
+          ws.send("저장완료!") //대충 머 보내주고 닫기
+          ws.close()
+        }
+        // console.log(`Message from client: ${event.data}`)
+        await fs.promises.writeFile("./Files/aa_part", event.data); //나중에 경로관련 라이브러리 만들기
+        //청크 단위만큼 파일명 바꿔서 저장해뒀다 막판에 함치기 > 중간에 유실된게 있으면 유실된거만 요청 가능해짐 + 이름중첩문제 해결
+      },
+      onOpen: (ws) => {
+        print("새 연결이 생겼습니다!")
+      },
+      onClose: () => {
+        console.log('Connection closed')
+      },
+
+    }
+  })
+)
 
 app.get('/', async(c) => {
   const file = Bun.file(html("index.html"));
   return new Response(file);
-
   // const session = c.get('session')
   // let usession_id = session.get('usession_id')
   // let user = uchein.who_is(usession_id)
@@ -126,4 +132,8 @@ app.post('/login', async (c) => {
 
 // })
 
-export default app
+// export default app
+export default {
+  fetch: app.fetch,
+  websocket,
+}

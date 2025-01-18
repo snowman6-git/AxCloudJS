@@ -10,7 +10,7 @@ export function uuid_gen(){
   return uuid
 }
 
-export function html(filename: string){
+export function html(filename: string){ //차후 뭐든지 파일이면 가능하게 클래스로 만들기
   const root = path.join("./src/htmls/", filename);
   return root
 }
