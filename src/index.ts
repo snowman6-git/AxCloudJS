@@ -49,10 +49,8 @@ app.use('*', sessionMiddleware({
 app.get( //실제로 할땐 wss 해서 인증서박기
   '/ws', //기본 주소를 동반한 라우팅 localhost:port/ws
   upgradeWebSocket((c) => {
-
     // const session = c.get('session')
     // if(uchein.who_is(session.get("usession_id"))){}
-
     return {
       async onMessage(event, ws) {
         if(event.data === "end"){ //이걸 이딴식으로 해도 되는지 찾아오기

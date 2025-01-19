@@ -22,7 +22,8 @@
         upload(files[i])
     }  
     }
-    let chunkSize = 1024
+
+    const chunkSize = 10 * 1024 * 1024;
     const upload = async (file) => {
     const totalChunks = Math.ceil(file.size / chunkSize);
     let offset = 0;
@@ -31,30 +32,16 @@
         const formData = new FormData();
         formData.append('filename', file.name); // 파일 이름 추가
         formData.append('chunk', chunk); // 청크 추가
-        ws.send(chunk)
+        
+        ws.send(formData)
     }
     ws.send("end")
     }
-
-
 
     const ws = new WebSocket('ws://localhost:3000/ws');
 
     ws.onopen = () => {
         console.log('서버에 연결되었습니다.');
-    };
-
-
-    // ws.onmessage = (event) => {
-    //     const messagesDiv = document.getElementById('messages');
-    //     messagesDiv.innerHTML += `<p>${event.data}</p>`;
-    // };
-
-    document.getElementById('sendButton').onclick = () => {
-        const messageInput = document.getElementById('messageInput');
-        const message = messageInput.value;
-        ws.send(message);
-        messageInput.value = '';
     };
 
     ws.onclose = () => {
