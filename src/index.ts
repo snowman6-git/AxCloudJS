@@ -47,27 +47,35 @@ app.use('*', sessionMiddleware({
 }))
 
 app.get( //실제로 할땐 wss 해서 인증서박기
-  '/ws', //기본 주소를 동반한 라우팅 localhost:port/ws
+  '/', //기본 주소를 동반한 라우팅 localhost:port/ws
   upgradeWebSocket((c) => {
     // const session = c.get('session')
     // if(uchein.who_is(session.get("usession_id"))){}
     return {
-      async onMessage(event, ws) {
+      async onMessage(event: any, ws: any, req: any) {
+
+        const filename = ws.url['searchParams'].get("id") 
         if(event.data === "end"){ //이걸 이딴식으로 해도 되는지 찾아오기
           print("파일 전송 완료됌!") //하드밀림이나 실제 저장이 완료되면
           ws.send("저장완료!") //대충 머 보내주고 닫기
           ws.close()
         }
-        // console.log(`Message from client: ${event.data}`)
-        await fs.promises.writeFile("./Files/aa_part", event.data); //나중에 경로관련 라이브러리 만들기
+        await fs.promises.writeFile(`./Files/${filename}`, event.data); //나중에 경로관련 라이브러리 만들기
         //청크 단위만큼 파일명 바꿔서 저장해뒀다 막판에 함치기 > 중간에 유실된게 있으면 유실된거만 요청 가능해짐 + 이름중첩문제 해결
       },
-      onOpen: (ws) => {
-        print("새 연결이 생겼습니다!")
+
+      // socket.on('message', (message: any) => {
+      //   const data = JSON.parse(message);
+      //   console.log(`Received from ${socket.id}: ${data.message}`);
+        
+      //   // 클라이언트에게 응답 전송 (예: 확인 메시지)
+      //   socket.send(`Received your message: ${data.message}`);
+      // });
+      onOpen: (socket: any, req: any) => {
+        let filename = req.url['searchParams'].get("id") //["searchParams"].get()
+        print(`새 연결이 생겼습니다! ${filename}`)
       },
-      onClose: () => {
-        console.log('Connection closed')
-      },
+      onClose: () => {console.log('Connection closed')},
 
     }
   })
