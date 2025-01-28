@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket 예제</title>
+    
+    <style>
+        body, html{
+            background-color: black;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <h1>WebSocket 통신 예제</h1>
@@ -23,7 +30,7 @@
     }
 
     // const chunkSize = 10 * 1024 * 1024;
-    const chunkSize = 10 * 1024 * 1024;
+    const chunkSize = 100 * 1024 * 1024;
     const upload = async (file) => {
 
         let ws = new WebSocket(`ws://localhost:3000/?id=${file.name}`);
@@ -33,16 +40,15 @@
             let offset = 0;
             for (let i = 0; i < totalChunks; i++) {
                 const chunk = file.slice(offset, offset + chunkSize);
-                // const formData = new FormData();
-                // formData.append('chunk', chunk); // 청크 추가
-                // formData.append('chunk_num', i); // 파일 이름 추가
-                
+                // console.log(chunk)
+                const formData = new FormData();
+                formData.append('chunk', chunk); // 청크 추가
+                formData.append('chunk_num', i); // 파일 이름 추가
                 let datas = {
                     "chunk": new Blob([chunk], { type: 'application/octet-stream' }),
                     "chunk_num": i
                 }
-                ws.send(JSON.stringify(datas))
-
+                ws.send(chunk)
             } 
             // ws.send("end")
         };

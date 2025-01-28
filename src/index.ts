@@ -53,19 +53,20 @@ app.get( //실제로 할땐 wss 해서 인증서박기
     // if(uchein.who_is(session.get("usession_id"))){}
     return {
       async onMessage(event: any, ws: any, req: any) {
-        let a = JSON.parse(event.data)
-        const filename = ws.url['searchParams'].get("id")
-        print(a)
+        // let a = JSON.parse(event.data)
+        // const filename = ws.url['searchParams'].get("id")
+        // print(a)
 
-        if(event.data === "end"){ //이걸 이딴식으로 해도 되는지 찾아오기
-          print("파일 전송 완료됌!") //하드밀림이나 실제 저장이 완료되면
-          // `./Files/${a["chunk_num"]}_${filename}_part`
+        // if(event.data === "end"){ //이걸 이딴식으로 해도 되는지 찾아오기
+        //   print("파일 전송 완료됌!") //하드밀림이나 실제 저장이 완료되면
+        //   // `./Files/${a["chunk_num"]}_${filename}_part`
           
-          //  ws.send("저장완료!") //대충 머 보내주고 닫기
-          ws.close()
-        }
+        //   //  ws.send("저장완료!") //대충 머 보내주고 닫기
+        //   ws.close()
+        // }
+        await fs.promises.writeFile(`./Files/_part`, event.data); //나중에 경로관련 라이브러리 만들기
         
-        await fs.promises.writeFile(`./Files/${a["chunk_num"]}_${filename}_part`, a["chunk"]); //나중에 경로관련 라이브러리 만들기
+        // await fs.promises.writeFile(`./Files/${a["chunk_num"]}_${filename}_part`, a["chunk"]); //나중에 경로관련 라이브러리 만들기
         //청크 단위만큼 파일명 바꿔서 저장해뒀다 막판에 함치기 > 중간에 유실된게 있으면 유실된거만 요청 가능해짐 + 이름중첩문제 해결
       },
 
